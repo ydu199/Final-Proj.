@@ -209,7 +209,7 @@ subtitle = "",
             #geom_text( aes(label = Ra), 
                             #position = position_dodge(width=0.8),  size=2,vjust=-0.15, check_overlap =FALSE)
 ```
-Figure 5 shows that he highest daily return of my portfolio is 14.58% on September 01, 2020, and the lowest is -7.5% on November 09,2020.
+Figure 5 shows that the highest daily return of my portfolio is 14.58% on September 01, 2020, and the lowest is -7.5% on November 09,2020.
 
 ### Figure 6. The initial investment amount and final transaction amount (USD).
 ```{r}
