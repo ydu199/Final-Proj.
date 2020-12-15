@@ -1,0 +1,296 @@
+---
+title: "Portfolio Investment Report"
+author: "Yu Du"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo =FALSE)
+library(knitr)
+library(ggplot2)
+library(tidyverse)
+library(tidyquant)
+library(kableExtra)
+```
+
+```{r}
+#Get the data from yahoo!finance and store them in csv files.
+#Need to return cash on 12/01/2020, so (to="2020-12-02") in the functioAn.
+
+#alibaba<-tq_get("BABA", get = "stock.prices", from = "2020-07-01", to= "2020-12-02")
+#write.csv(alibaba,"alibaba.csv",row.names=FALSE)
+#cvs<-tq_get("CVS", get = "stock.prices", from = "2020-07-01", to= "2020-12-02")
+#write.csv(cvs,"CVS.csv",row.names=FALSE)
+#tencent<-tq_get("TCEHY", get = "stock.prices", from = "2020-07-01", to= "2020-12-02")
+#write.csv(tencent,"tencent.csv",row.names=FALSE)
+#zoom<-tq_get("ZM", get = "stock.prices", from = "2020-07-01", to= "2020-12-02")
+#write.csv(zoom,"zoom.csv",row.names=FALSE)
+```
+
+# Introduction 
+The COVID-19 pandemic had a devastating effect on the economy in the United States this year. In early March 2020, the first lockdown began and the stock market plunged. After this initial reaction, however, the market recovered. In this report, I will make an investment decision based on advice from online financial websites with an initial amount 25000 dollars and show the performances of my investment portfolio.
+
+From *Investment Insights on the Path Ahead to a Market Recovery* posted on June 26, 2020, the technology sector and healthcare sector can be continued to operate regardless of circumstances so the financial markets are more likely to favor them. Besides, from *BlackRock Adopts New Investing Framework Due to Pandemic* posted on June 30, 2020, Chinese and South Korean stocks are more likely to be favored by the markets compared to other stocks. My final investment decision is to invest 30% in ZM, 30% in TCEHY, 20% in BABA, and 20% in CVS. These stocks are from corporations which I frequently use their products and services this year and I am trusted in. One is in the healthcare sector and the other three are in the technology sector. Two of them are Chinese stocks.
+
+
+# Portfolio 
+## Component and Weights
+1.Zoom Video Communications, Inc.(**ZM**): 30%
+
+2.Tencent Holdings Limited (**TCEHY**): 30%
+
+3.Alibaba Group Holding Limited (**BABA**): 20%
+
+4.CVS Health Corporation (**CVS**): 20%
+
+## Performance of individual stock
+### Stock price
+#### Figure 1. The prices of stocks on July 01 2020 and December 01 2020 from yahoo!finance.
+```{r}
+# load the data: sometimes it cannot connect to yahoo!finance by tq_get() function successfully, so I had stored
+# them in csv files locally.
+zoom<-read.csv("zoom.csv")
+tencent<-read.csv("tencent.csv")
+alibaba<-read.csv("alibaba.csv")
+cvs_health<-read.csv("CVS.csv")
+#zoom$date<-as.Date(zoom$date)
+#tencent$date<-as.Date(tencent$date)
+#alibaba$date<-as.Date(alibaba$date)
+#cvs_health$date<-as.Date(cvs_health$date)
+```
+
+
+```{r}
+stock4<-rbind(zoom,tencent,alibaba,cvs_health)
+#Add a column 
+stock4$currency<- 'USD'
+#colnames(stock4)
+stock4 <- stock4[, c(1, 2, 9, 3, 4,5,6,7,8)]
+#stock4
+stock4_1<-stock4%>%filter(date %in% c('2020-07-01','2020-12-01'))
+#stock4_1
+kable(head(stock4_1, n=8))%>% kable_styling(font_size=12)
+```
+
+
+#### Figure 2. The movement of stocks' close prices.
+```{r, fig.align='center'}
+stock4$date<-as.Date(stock4$date)
+stock4%>%ggplot(aes(x = date, y = adjusted, color = factor(symbol),group=symbol)) +
+    geom_line(size = 0.9) +labs(title = "Stock Price",
+         subtitle = "Comparing Four Stocks",
+         x = "", y = "Price",
+         color = "Stock") +
+   scale_color_tq() +scale_y_continuous(labels = scales::dollar)+
+  scale_x_date(breaks = "1 month", date_labels = "%b")+theme_tq_dark()
+```
+Figure 2 shows the close price of ZM fluctuates the most and the close prices of CVS and TCEHY did not change much.
+
+```{r}
+# Caculate the daily return for stocks.
+stock4$date<-as.Date(stock4$date)
+stock_returns_daily <- stock4%>% group_by(symbol) %>%
+    tq_transmute(select     = adjusted, 
+                 mutate_fun = periodReturn, 
+                 period     = "daily", 
+                 col_rename = "Ra")
+#stock_returns_daily
+
+```
+
+```{r}
+#Calculate the stock growth
+#zoom
+weights <- c(1, 0, 0,0)
+zoom_growth_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col   = symbol, 
+                 returns_col  = Ra, 
+                 weights      = weights, 
+                 col_rename   = "stock.growth",
+                 wealth.index = TRUE) %>%
+  mutate(stock.growth = stock.growth * 7500)
+#zoom_growth_daily
+
+#tencent
+weights <- c(0, 1, 0,0)
+tencent_growth_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col   = symbol, 
+                 returns_col  = Ra, 
+                 weights      = weights, 
+                 col_rename   = "stock.growth",
+                 wealth.index = TRUE) %>%
+  mutate(stock.growth = stock.growth * 7500)
+#tencent_growth_daily
+
+#alibaba
+weights <- c(0, 0, 1,0)
+alibaba_growth_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col   = symbol, 
+                 returns_col  = Ra, 
+                 weights      = weights, 
+                 col_rename   = "stock.growth",
+                 wealth.index = TRUE) %>%
+  mutate(stock.growth = stock.growth * 5000)
+#alibaba_growth_daily
+
+#cvs
+weights <- c(0, 0, 0,1)
+cvs_growth_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col   = symbol, 
+                 returns_col  = Ra, 
+                 weights      = weights, 
+                 col_rename   = "stock.growth",
+                 wealth.index = TRUE) %>%
+  mutate(stock.growth = stock.growth * 5000)
+#cvs_growth_daily
+
+stock_growth_daily<-rbind(zoom_growth_daily,tencent_growth_daily,alibaba_growth_daily,cvs_growth_daily)
+```
+
+```{r}
+stock_returns_daily$stock.growth<-stock_growth_daily$stock.growth
+#stock_returns_daily
+```
+
+### Figure 3. The movement of stocks' daily returns.
+```{r}
+stock_returns_daily%>%ggplot(aes(x = date, y = Ra, color = factor(symbol),group=symbol)) +
+    geom_line(size = 0.4) +theme_tq()+
+  #theme(axis.text.x=element_blank(),
+        #axis.ticks.x=element_blank())+
+    labs(title = "Stock Daily Return",
+         subtitle = "Comparing Four Stocks",
+         x = "", y = "Daily Return",
+         color = "Stock") +
+    scale_color_tq() 
+```
+Figure 3 shows that ZM had the highest daily return which was 4.1% on September 01, 2020 and the lowest daily return which was -17% on November 09, 2020. 
+
+### Figure 4. The movement of stocks' growths.
+```{r}
+stock_returns_daily%>%ggplot(aes(x = date, y = stock.growth, color = factor(symbol),group=symbol)) +
+    geom_line(size = 0.4) +theme_tq()+
+  #theme(axis.text.x=element_blank(),
+        #axis.ticks.x=element_blank())+
+    labs(title = "Stock Growth",
+         subtitle = "Comparing Four Stocks",
+         x = "", y = "Stock Value",
+         color = "Stock") +
+    scale_color_tq() +
+    scale_y_continuous(labels = scales::dollar)
+```
+Figure 4 shows that the stock growth of ZM fluctuates the most among four stocks. By December 01, 2020, for the stocks with the same initial investment amount, the stock value of ZM is higher than TCEHY and the stock value of BABA is higher than CVS.
+
+## Performance of portfolio
+### Figure 5. The daily return of portfolio.
+```{r,warning=FALSE,message=FALSE}
+weights <- c(0.30, 0.30, 0.20,0.20)
+portfolio_returns_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col  = symbol, 
+                 returns_col = Ra, 
+                 weights     = weights, 
+                 col_rename  = "Ra")
+portfolio_returns_daily$Ra<-round(portfolio_returns_daily$Ra,digits=4)
+
+por<-rbind(portfolio_returns_daily[1,],portfolio_returns_daily[44,],portfolio_returns_daily[92,],portfolio_returns_daily[107,])
+colnames(por)[2]<-'Daily Return'
+kable(por) %>% kable_styling(font_size=12)
+
+portfolio_returns_daily%>%
+ggplot(aes(x = date, y = Ra)) +
+    geom_bar(stat = "identity", fill = palette_light()[[1]]) +
+    labs(title = "Portfolio Return",
+subtitle = "",
+         caption = "Shows an above-zero trend meaning positive returns",
+         x = "", y = "daily Returns") +
+    geom_smooth(method = "lm") +
+    theme_tq() +
+    scale_color_tq() +
+    scale_y_continuous(labels = scales::percent)#+ 
+            #geom_text( aes(label = Ra), 
+                            #position = position_dodge(width=0.8),  size=2,vjust=-0.15, check_overlap =FALSE)
+```
+Figure 5 shows that he highest daily return of my portfolio is 14.58% on September 01, 2020, and the lowest is -7.5% on November 09,2020.
+
+### Figure 6. The initial investment amount and final transaction amount (USD).
+```{r}
+weights <- c(0.3, 0.3, 0.2,0.2)
+portfolio_growth_daily <- stock_returns_daily %>%
+    tq_portfolio(assets_col   = symbol, 
+                 returns_col  = Ra, 
+                 weights      = weights, 
+                 col_rename   = "investment.growth",
+                 wealth.index = TRUE) %>%
+  mutate(investment.growth = investment.growth * 25000)
+port<-rbind(portfolio_growth_daily[1,],portfolio_growth_daily[107,])
+colnames(port)[2]<-'Portfolio Value'
+kable(port) %>% kable_styling(font_size=12)
+```
+
+### Figure 7. The movement of portfolio's value.
+```{r, warning=FALSE,message=FALSE}
+portfolio_growth_daily%>%
+ggplot(aes(x = date, y = investment.growth)) +
+    geom_line(size = 2, color = palette_light()[[1]]) +
+    labs(title = "Portfolio Growth",
+         subtitle = "30% ZM, 30% TCEHY, 20% BABA, 20% CVS",
+         x = "", y = "Portfolio Value") +
+    geom_smooth(method = "loess") +
+    theme_tq() +
+    scale_color_tq() +
+    scale_y_continuous(labels = scales::dollar)
+```
+The highest investment value between July 01, 2020 and December 01, 2020 is 36426 dollars on October 19, 2020. Besides, the investment growth did not drop lower than the initial investment amount 25000 dollars during this period.
+
+
+# Result
+The final transaction returned to cash on December 01, 2020 is 31794 dollars with an initial investment amount 25000 dollars on July 01 2020. The highest daily return of my portfolio is 14.58% on September 01, 2020. ZM grows much more than the other three stocks in my portfolio. It is not surprising to find that the movement of portfolio's value is similar with the movement of ZM's growth.
+
+# Shiny App
+```{r}
+#Prepare for shiny app
+#stock4
+#stock4$Ra<-stock_returns_daily$Ra
+#stock4$stock.growth<-stock_returns_daily$stock.growth
+#stock4
+#colnames(stock4)[10]<-'daily return'
+#colnames(stock4)[11]<-'growth'
+#write.csv(stock4,"stock4.csv",row.names=FALSE)
+```
+
+```{r}
+#portfolio_growth_daily
+#portfolio<-portfolio_growth_daily
+#colnames(portfolio)[2]<-'portfolio value'
+#portfolio$currency<-'USD'
+```
+
+```{r}
+#write.csv(portfolio,"portfolio.csv",row.names=FALSE)
+```
+The Shiny App has been published: https://bu-rstudio-connect.bu.edu/content/57, and https://ydu199.shinyapps.io/Final_Project/
+
+# Github Repository
+All codes can be approached from my github repository: https://github.com/ydu199/Final-Proj..git
+
+# Reference
+```{r}
+#citation('ggplot2')
+#citation('tidyquant')
+#citation('tidyverse')
+#citation('ggplot2')
+```
+
+Sarker, Dev. "Investment Insights on the Path Ahead to a Market Recovery." *BlueRocke*, June 26, 2020.
+https://bluerocke.com/2020/06/
+
+Napach, Bernice. "BlackRock Adopts New Investing Framework Due to Pandemic." *ThinkAdvisor*, June 30, 2020. https://www.thinkadvisor.com/2020/06/30/blackrock-adopts-new-investing-framework-due-to-pandemic/
+
+Matt Dancho and Davis Vaughan (2020). tidyquant: Tidy Quantitative Financial Analysis. R package version 1.0.2.
+  https://CRAN.R-project.org/package=tidyquant
+  
+H. Wickham. ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686,
+  https://doi.org/10.21105/joss.01686
+
+
