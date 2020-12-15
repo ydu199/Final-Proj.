@@ -14,7 +14,7 @@ library(kableExtra)
 
 ```{r}
 #Get the data from yahoo!finance and store them in csv files.
-#Need to return cash on 12/01/2020, so (to="2020-12-02") in the functioAn.
+#Need to return cash on 12/01/2020, so (to="2020-12-02") in the function.
 
 #alibaba<-tq_get("BABA", get = "stock.prices", from = "2020-07-01", to= "2020-12-02")
 #write.csv(alibaba,"alibaba.csv",row.names=FALSE)
